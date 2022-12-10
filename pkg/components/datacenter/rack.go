@@ -3,17 +3,19 @@ package datacenter
 import (
 	"errors"
 	"fmt"
-	"strings"
 )
 
 // Rack represents a rack.
 type Rack struct {
+	// the unique identifier for the rack
+	ID string
+
 	// the name of the rack
 	Name string
 	// the number of total RUs the rack has. (default 45)
 	Size int
 
-	// the datacenter this rack belongs to.
+	// the datacenterAggregate this rack belongs to.
 	Datacenter *Datacenter
 	// the devices that are racked here.
 	Devices []*Device
@@ -21,34 +23,28 @@ type Rack struct {
 
 const defaultRackSize = 45
 
-func NewRack(name string, size ...int) *Rack {
-	rackSize := defaultRackSize
-	if len(size) > 0 {
-		rackSize = size[0]
-	}
+func NewRack() *Rack {
 	return &Rack{
-		Name: strings.ToLower(name),
-		Size: rackSize,
-
-		Devices: make([]*Device, rackSize),
+		Devices: make([]*Device, 0),
 	}
 }
 
 // CanFitDevice returns true if the Rack a valid range of RU(s) of size f.
 // a range is valid if it is: composed of sequential RU(s), all RU(s) in the range are not occupied.
-func (r *Rack) CanFitDevice(formFactor int) bool {
+func (r *Rack) CanFitDevice(formFactor int) (int, bool) {
 	return r.canFitDevice(formFactor, r.Size, false)
 }
 
 // CanFitDeviceAt is like CanFitDevice but returns true only if there is a valid range of RU(s) beginning at the provided elevation(el).
 func (r *Rack) CanFitDeviceAt(formFactor int, el int) bool {
-	return r.canFitDevice(formFactor, el, true)
+	_, ok := r.canFitDevice(formFactor, el, true)
+	return ok
 }
 
 // canFitDevice searches for a consecutive range of open RU(s) that is of size formFactor, starting at startingElevation
 // and returns true on the first valid range found. the search satisfies the strict criteria if the first valid range found
 // starts at startingElevation.
-func (r *Rack) canFitDevice(formFactor int, startingElevation int, strict bool) bool {
+func (r *Rack) canFitDevice(formFactor int, startingElevation int, strict bool) (int, bool) {
 	var (
 		// tracks the number of consecutive open RU(s) in the currently tracked range.
 		openRUCount = 0
@@ -66,23 +62,24 @@ func (r *Rack) canFitDevice(formFactor int, startingElevation int, strict bool) 
 
 		switch {
 		case openRUCount >= formFactor:
-			return true
+			// return the highest RU in the found range
+			return i + (openRUCount - 1), true
 		case i >= strictLimit && strict:
 			// the search has failed the strict criteria.
-			return false
+			return 0, false
 		}
 	}
-	return false
+	return 0, false
 }
 
 // RackDevice attempts to put the passed device into the Rack and returns an error if there is no space
 // available for the device.
-func (r *Rack) RackDevice(device Device) error {
+func (r *Rack) RackDevice(device *Device) error {
 	return r.rackDevice(device)
 }
 
 // RackDeviceAt is like RackDevice but returns an error if the device cannot be racked at the elevation passed.
-func (r *Rack) RackDeviceAt(device Device, el int) error {
+func (r *Rack) RackDeviceAt(device *Device, el int) error {
 	// rackDevice accepts the desired index the device is to be inserted. elevation = index+1
 	return r.rackDevice(device, el-1)
 }
@@ -92,7 +89,7 @@ var ErrUnableToFitDevice = errors.New("unable to fit device")
 // rackDevice racks a device into the Rack and returns an error if no there is no space available for the device.
 // if a value is passed for 'at', the device will attempt to be racked at the passed index and returns an error
 // if it cannot fit there.
-func (r *Rack) rackDevice(device Device, at ...int) error {
+func (r *Rack) rackDevice(device *Device, at ...int) error {
 	// the beginning and end of the RU range to insert the device at.
 	start := -1
 
@@ -126,7 +123,7 @@ func (r *Rack) rackDevice(device Device, at ...int) error {
 	device.Elevation = start + 1
 	end := start - device.Model.FormFactor
 	for i := start; i > end; i-- {
-		r.Devices[i] = &device
+		r.Devices[i] = device
 	}
 	return nil
 }

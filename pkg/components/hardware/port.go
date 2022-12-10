@@ -12,3 +12,12 @@ type Port struct {
 	PortFormat string
 	Index      int
 }
+
+type PortGroup struct {
+	Name          string
+	TotalQuantity int
+	Members       []struct {
+		Quantity        int
+		PossibleConfigs []PortConfig
+	}
+}

@@ -1,18 +1,25 @@
 package datacenter
 
-import "strings"
+import "github.com/malijoe/DatacenterGenerator/pkg/internal/units"
 
 // Datacenter represents a datacenter.
 type Datacenter struct {
+	// the unique identifier for the datacenter
+	ID string
+
 	// the site name of the datacenter.
 	Site string
 	// the building where the datacenter is located.
 	Building string
 	// the room of the building where the datacenter is located.
 	Room string
+	// the providers and their transfer speeds for this datacenter.
+	Providers map[string]units.Value
 
 	// the racks that comprise the datacenter.
 	Racks []*Rack
+	// the pods that exist in the datacenter
+	Pods []*Pod
 
 	// used to track the number of instances by function of pods in the datacenter.
 	podMetadata map[Function]int
@@ -21,9 +28,10 @@ type Datacenter struct {
 	deviceMetadata map[string]map[string]int
 }
 
-func NewDatacenter(site string) *Datacenter {
+func NewDatacenter() *Datacenter {
 	return &Datacenter{
-		Site: strings.ToLower(site),
+		podMetadata:    make(map[Function]int),
+		deviceMetadata: make(map[string]map[string]int),
 	}
 }
 

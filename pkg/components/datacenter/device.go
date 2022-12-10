@@ -4,6 +4,9 @@ import "github.com/malijoe/DatacenterGenerator/pkg/components/hardware"
 
 // Device represents a device.
 type Device struct {
+	// the unique identifier for the device.
+	ID string
+
 	// the hostname of the device.
 	Hostname string
 	// the elevation of the device. corresponds to the first RU that this device occupies.
@@ -22,14 +25,13 @@ type Device struct {
 	Categories []string
 
 	// the pod this device belongs to
-	Pod Pod
-
+	Pod *Pod
 	// the rack this device is located in.
 	Rack *Rack
-	// the datacenter this device is located in.
+	// the datacenterAggregate this device is located in.
 	Datacenter *Datacenter
 }
 
-func NewDevice(model hardware.HardwareModel) *Device {
-	return &Device{Model: model}
+func NewDevice() *Device {
+	return &Device{}
 }

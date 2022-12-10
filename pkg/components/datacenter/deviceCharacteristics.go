@@ -1,7 +1,6 @@
 package datacenter
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -84,37 +83,4 @@ func (d Designation) Alpha() string {
 	}
 
 	return "o"
-}
-
-// Pod is a value object that represents a logical grouping of devices.
-type Pod struct {
-	// the name is found by concatenating the string representation of the pod's
-	// function and instance number (i.e. 'service0').
-	Name string
-	// the instance number of the pod. represents the number of pods with a shared
-	// function in the same datacenter.
-	Instance int
-	// the function of this pod. pods cannot have a function value of UnknownFunction.
-	Function Function
-}
-
-func NewPod(instance int, function Function) Pod {
-	return Pod{
-		Name:     fmt.Sprintf("%s%d", function, instance),
-		Instance: instance,
-		Function: function,
-	}
-}
-
-// IsZero returns true if the pod is the zero value.
-func (p Pod) IsZero() bool {
-	return p.Function == UnknownFunction
-}
-
-// Less returns true if: p (the calling pod) < b (the passed pod).
-func (p Pod) Less(b Pod) bool {
-	if p.Function == b.Function {
-		return p.Instance < b.Instance
-	}
-	return false
 }
