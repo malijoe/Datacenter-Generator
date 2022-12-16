@@ -7,13 +7,14 @@ import (
 )
 
 const (
-	DatacenterCreated   = "V1_DATACENTER_CREATED"
-	PodCreated          = "V1_POD_CREATED"
-	DatacenterPodAdded  = "V1_DATACENTER_POD_ADDED"
-	RackCreated         = "V1_RACK_CREATED"
-	DatacenterRackAdded = "V1_DATACENTER_RACK_ADDED"
-	DeviceCreated       = "V1_DEVICE_CREATED"
-	DeviceRacked        = "V1_DEVICE_RACKED"
+	DatacenterCreated     = "V1_DATACENTER_CREATED"
+	PodCreated            = "V1_POD_CREATED"
+	DatacenterPodAdded    = "V1_DATACENTER_POD_ADDED"
+	RackCreated           = "V1_RACK_CREATED"
+	DatacenterRackAdded   = "V1_DATACENTER_RACK_ADDED"
+	DeviceCreated         = "V1_DEVICE_CREATED"
+	DeviceRacked          = "V1_DEVICE_RACKED"
+	DeviceTemplateCreated = "V1_DEVICE_TEMPLATE_CREATED"
 )
 
 type DatacenterCreatedEvent struct {
@@ -154,4 +155,29 @@ func NewDeviceRackedEvent(aggregate events.Aggregate, deviceId string, elevation
 	}
 	return event, nil
 
+}
+
+type DeviceTemplateCreatedEvent struct {
+	ModelId          string              `json:"modelId"`
+	Variant          string              `json:"variant"`
+	Categories       []string            `json:"categories"`
+	HostnameTemplate string              `json:"hostnameTemplate"`
+	Alias            string              `json:"alias"`
+	Function         datacenter.Function `json:"function"`
+}
+
+func NewDeviceTemplateCreatedEvent(aggregate events.Aggregate, modelId, variant string, categories []string, hostnameTemplate, alias string, function datacenter.Function) (events.Event, error) {
+	data := DeviceTemplateCreatedEvent{
+		ModelId:          modelId,
+		Variant:          variant,
+		Categories:       categories,
+		HostnameTemplate: hostnameTemplate,
+		Alias:            alias,
+		Function:         function,
+	}
+	event := events.NewBaseEvent(aggregate, DeviceTemplateCreated)
+	if err := event.SetJsonData(&data); err != nil {
+		return events.Event{}, err
+	}
+	return event, nil
 }

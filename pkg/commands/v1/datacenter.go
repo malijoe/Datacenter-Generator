@@ -6,6 +6,8 @@ import (
 
 	"github.com/EventStore/EventStore-Client-Go/esdb"
 	"github.com/malijoe/DatacenterGenerator/pkg/aggregates/datacenterAggregate"
+	"github.com/malijoe/DatacenterGenerator/pkg/aggregates/deviceAggregate"
+	"github.com/malijoe/DatacenterGenerator/pkg/aggregates/deviceTemplateAggregate"
 	"github.com/malijoe/DatacenterGenerator/pkg/aggregates/podAggregate"
 	"github.com/malijoe/DatacenterGenerator/pkg/aggregates/rackAggregate"
 	"github.com/malijoe/DatacenterGenerator/pkg/internal/events"
@@ -227,5 +229,50 @@ type createDeviceCmdHandler struct {
 }
 
 func (h *createDeviceCmdHandler) Handle(ctx context.Context, cmd *CreateDeviceCommand) error {
+	device := deviceAggregate.NewDeviceAggregateWithId(cmd.GetAggregateId())
+
+	err := h.store.Exists(ctx, device.GetId())
+	if err != nil && !errors.Is(err, esdb.ErrStreamNotFound) {
+		return err
+	}
+
+	return nil
+}
+
+type CreateDeviceTemplateCommand struct {
+	events.BaseCommand
+	ModelId          string
+	Variant          string
+	Categories       []string
+	HostnameTemplate string
+	Alias            string
+	Function         string
+}
+
+func NewCreateDeviceTemplateCommand(aggregateId string, modelId, variant string, categories []string, hostnameTemplate, alias, function string) *CreateDeviceTemplateCommand {
+	return &CreateDeviceTemplateCommand{BaseCommand: events.NewBaseCommand(aggregateId), ModelId: modelId, Variant: variant, Categories: categories, Alias: alias, Function: function}
+}
+
+type CreateDeviceTemplateCmdHandler interface {
+	Handle(ctx context.Context, cmd *CreateDeviceTemplateCommand) error
+}
+
+type createDeviceTemplateCmdHandler struct {
+	store events.AggregateStore
+	log   logger.Logger
+}
+
+func NewCreateDeviceTemplateCmdHandler(store events.AggregateStore, log logger.Logger) *createDeviceTemplateCmdHandler {
+	return &createDeviceTemplateCmdHandler{store: store, log: log}
+}
+
+func (h *createDeviceTemplateCmdHandler) Handle(ctx context.Context, cmd *CreateDeviceTemplateCommand) error {
+	deviceTemplate := deviceTemplateAggregate.NewDeviceTemplateAggregateWithId(cmd.GetAggregateId())
+
+	err := h.store.Exists(ctx, deviceTemplate.GetId())
+	if err != nil && !errors.Is(err, esdb.ErrStreamNotFound) {
+		return err
+	}
+
 	return nil
 }
